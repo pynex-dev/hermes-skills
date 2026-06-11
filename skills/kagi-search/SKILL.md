@@ -2,7 +2,7 @@
 name: kagi-search
 description: Kagi Search MCP server for Hermes. High-quality, ad-free web search with multiple workflows (general, news, videos, podcasts, images) and page extraction.
 tags: [search, kagi, mcp, web]
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Kagi Search MCP Server
@@ -16,11 +16,33 @@ Sets up [Kagi](https://kagi.com) as an MCP search tool in Hermes. Kagi provides 
 
 ## Setup
 
-Add the `kagimcp` MCP server to your Hermes config. See the Hermes docs on MCP server configuration for how to register a new server. The server package is `kagimcp` (available on PyPI, run via `uvx`), and it requires the `KAGI_API_KEY` environment variable.
+1. **Set your API key in `.env`:**
 
-After configuring, reload MCP servers and verify the `mcp_kagi_*` tools appear.
+   ```bash
+   echo 'KAGI_API_KEY=your_key_here' >> ~/.hermes/.env
+   ```
+
+2. **Add the MCP server:**
+
+   ```bash
+   hermes mcp add kagi --command uvx --args kagimcp
+   ```
+
+   When prompted:
+   - Authentication? → `n` (Kagi uses the env var, not OAuth)
+   - Enable all tools? → `Y`
+
+3. **Verify:**
+
+   ```bash
+   hermes mcp test kagi
+   ```
+
+   Should show 2 tools discovered. Start a new session (`/reset`) to use them.
 
 ## Available Tools
+
+Hermes prefixes MCP tool names with `mcp_<server-name>_`, so the Kagi tools appear as:
 
 | Tool | Purpose |
 |------|---------|
@@ -58,6 +80,7 @@ If you have multiple search tools, use them for their strengths:
 
 ## Pitfalls
 
+- **Secret redaction eats `--env` values.** Do NOT pass `--env KAGI_API_KEY=your_key` to `hermes mcp add` — Hermes redacts credential-like strings and writes literal `***` to `config.yaml` instead of the real key. Put the key in `~/.hermes/.env` instead, and either omit `--env` (the MCP server inherits from `.env` automatically) or use `--env KAGI_API_KEY=${KAGI_API_KEY}` for an env var reference.
 - Kagi API key is search-only by default. Extraction requires a higher plan tier.
 - `extract_count` inline extraction counts against your Kagi API quota.
 - `lens_id` is mutually exclusive with `include_domains`/`exclude_domains`/`time_relative`/`file_type`.
